@@ -36,8 +36,8 @@ const pay = new LinePay({
 app.use('/pay/reserve', (req, res) => {
     console.log('/pay/reserve');
     const options = {
-        productName: '診療費',
-        amount: 1,
+        productName: 'チョコレート',
+        amount: 100,
         currency: 'JPY',
         orderId: uuidv4(),
         confirmUrl: process.env.LINE_PAY_CONFIRM_URL
@@ -52,7 +52,7 @@ app.use('/pay/reserve', (req, res) => {
 
         reservation.transactionId = response.info.transactionId;
 
-        // cache.put(reservation.transactionId, reservation);
+        cache.put(reservation.transactionId, reservation);
         res.redirect(response.info.paymentUrl.web);
     }).catch((e) => {
         console.log(e);
