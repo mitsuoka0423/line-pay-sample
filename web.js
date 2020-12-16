@@ -1,31 +1,30 @@
+// おまじない
 "use strict";
 
-// Import packages.
+// ########################################
+//               初期設定など
+// ########################################
+
+// .envファイルを読み込みます
+require('dotenv').config();
+
+// パッケージを使用します
+const { v4: uuidv4 } = require('uuid');
+const cache = require('memory-cache');
+const LinePay = require('line-pay');
 const express = require("express");
 const app = express();
 
-// Launch server.
+
+// ローカル（自分のPC）でサーバーを公開するときのポート番号です
 app.listen(process.env.PORT || 5000, () => {
     console.log(`server is listening to ${process.env.PORT || 5000}...`);
 });
 
-// Middleware configuration to serve static file.
+// おまじない
 app.use(express.static(__dirname + "/public"));
 
-// Set ejs as template engine.
-app.set("view engine", "ejs");
 
-// Router configuration to serve web page containing pay button.
-app.get("/", (req, res) => {
-    res.render(__dirname + "/index");
-})
-
-require('dotenv').config();
-
-const { v4: uuidv4 } = require('uuid');
-const cache = require('memory-cache');
-
-const LinePay = require('line-pay');
 const pay = new LinePay({
     channelId: process.env.LINE_PAY_CHANNEL_ID,
     channelSecret: process.env.LINE_PAY_CHANNEL_SECRET,
