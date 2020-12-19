@@ -24,7 +24,6 @@ app.listen(process.env.PORT || 5000, () => {
 // おまじない
 app.use(express.static(__dirname + "/public"));
 
-
 const pay = new LinePay({
     channelId: process.env.LINE_PAY_CHANNEL_ID,
     channelSecret: process.env.LINE_PAY_CHANNEL_SECRET,
