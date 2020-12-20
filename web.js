@@ -11,7 +11,7 @@ require('dotenv').config();
 // パッケージを使用します
 const { v4: uuidv4 } = require('uuid');
 const cache = require('memory-cache');
-const LinePay = require('line-pay');
+const LinePay = require('line-pay-v3');
 const express = require("express");
 const app = express();
 
@@ -27,33 +27,50 @@ app.use(express.static(__dirname + "/public"));
 const pay = new LinePay({
     channelId: process.env.LINE_PAY_CHANNEL_ID,
     channelSecret: process.env.LINE_PAY_CHANNEL_SECRET,
-    hostname: process.env.LINE_PAY_HOSTNAME,
-    isSandbox: true // サンドボックスの場合、trueにする
+    uri: 'https://sandbox-api-pay.line.me', // サンドボックス環境を使用する
+    // uri: 'https://sandbox-api-pay.line.me', // 本番環境の場合はこちらを使用する
 });
 
 // 決済予約処理
-app.use('/pay/reserve', async (req, res) => {
-    console.log('/pay/reserveの処理を実行します。');
+app.use('/pay/request', async (req, res) => {
+    console.log('/pay/requestの処理を実行します。');
 
     // 商品名や値段を設定する場合はここを変更します。
-    const options = {
-        productName: 'チョコレート',
+    const order = {
         amount: 100,
         currency: 'JPY',
         orderId: uuidv4(),
-        confirmUrl: process.env.LINE_PAY_CONFIRM_URL
-    }
+        packages: [
+            {
+                id: 'Item001',
+                amount: 100,
+                name: '買い物かご',
+                products: [
+                    {
+                        name: 'チョコレート',
+                        imageUrl: 'https://2.bp.blogspot.com/-zEtBQS9hTfI/UZRBlbbtP8I/AAAAAAAASqE/vbK1D7YCNyU/s800/valentinesday_itachoco2.png',
+                        quantity: 1,
+                        price: 100
+                    }
+                ]
+            }
+        ],
+        redirectUrls: {
+            confirmUrl: 'http://localhost:5000/pay/confirm',
+        }
+    };
     console.log('以下のオプションで決済予約を行います。');
-    console.log(options);
+    console.log('order', order);
 
     try {
         // LINE Pay APIを使って、決済予約を行う。
-        const response = await pay.reserve(options);
-        
+        const response = await pay.request(order);
+        console.log('response', response);
+
         // 決済確認処理に必要な情報を用意し、後で使うので保存しておく。
-        const reservation = options;
+        const reservation = order;
         reservation.transactionId = response.info.transactionId;
-        console.log(reservation);
+        console.log('reservation', reservation);
         cache.put(reservation.transactionId, reservation);
 
         // 決済画面に遷移する。
@@ -73,6 +90,8 @@ app.use('/pay/confirm', async (req, res) => {
     if (!req.query.transactionId) {
         throw new Error('Transaction ID is not found');
     }
+
+    console.log('req', req);
 
     // 決済予約時に保存した情報を取り出す。
     const reservation = cache.get(req.query.transactionId);
