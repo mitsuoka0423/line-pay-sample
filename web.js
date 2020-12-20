@@ -24,11 +24,11 @@ app.listen(process.env.PORT || 5000, () => {
 // publicフォルダのファイルを公開する
 app.use(express.static(__dirname + "/public"));
 
+// line-pay-v3を使用する準備
 const pay = new LinePay({
     channelId: process.env.LINE_PAY_CHANNEL_ID,
     channelSecret: process.env.LINE_PAY_CHANNEL_SECRET,
-    uri: 'https://sandbox-api-pay.line.me', // サンドボックス環境を使用する
-    // uri: 'https://sandbox-api-pay.line.me', // 本番環境の場合はこちらを使用する
+    uri: process.env.ENV === 'production' ? 'https://api-pay.line.me' : 'https://sandbox-api-pay.line.me'
 });
 
 // 決済予約処理
@@ -37,20 +37,20 @@ app.use('/pay/request', async (req, res) => {
 
     // 商品名や値段を設定する場合はここを変更します。
     const order = {
-        amount: 100,
+        amount: 100, // packages[].amountの合計金額を記入する
         currency: 'JPY',
         orderId: uuidv4(),
         packages: [
             {
                 id: 'Item001',
-                amount: 100,
+                amount: 100, // products[].priceの合計金額を記入する
                 name: '買い物かご',
                 products: [
                     {
-                        name: 'チョコレート',
-                        imageUrl: 'https://2.bp.blogspot.com/-zEtBQS9hTfI/UZRBlbbtP8I/AAAAAAAASqE/vbK1D7YCNyU/s800/valentinesday_itachoco2.png',
-                        quantity: 1,
-                        price: 100
+                        name: 'チョコレート', // 商品名
+                        imageUrl: 'https://2.bp.blogspot.com/-zEtBQS9hTfI/UZRBlbbtP8I/AAAAAAAASqE/vbK1D7YCNyU/s800/valentinesday_itachoco2.png', // 商品画像
+                        quantity: 1, // 購入数
+                        price: 100 // 商品金額
                     }
                 ]
             }
