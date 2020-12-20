@@ -67,11 +67,8 @@ app.use('/pay/request', async (req, res) => {
         const response = await pay.request(order);
         console.log('response', response);
 
-        // 決済確認処理に必要な情報を用意し、後で使うので保存しておく。
-        const reservation = order;
-        reservation.transactionId = response.info.transactionId;
-        console.log('reservation', reservation);
-        cache.put(reservation.transactionId, reservation);
+        // 決済確認処理に必要な情報を保存しておく。
+        cache.put(order.orderId, order);
 
         // 決済画面に遷移する。
         res.redirect(response.info.paymentUrl.web);
@@ -87,32 +84,28 @@ app.use('/pay/request', async (req, res) => {
 // 決済確認処理
 app.use('/pay/confirm', async (req, res) => {
     console.log('/pay/confirmの処理を実行します。');
-    if (!req.query.transactionId) {
-        throw new Error('Transaction ID is not found');
-    }
-
-    console.log('req', req);
 
     // 決済予約時に保存した情報を取り出す。
-    const reservation = cache.get(req.query.transactionId);
-    if (!reservation) {
-        throw new Error('Reservation is not found');
+    const orderId = req.query.orderId;
+    if (!orderId) {
+        throw new Error('Order ID is not found');
     }
-    console.log('以下の決済予約を取得しました。');
-    console.log(reservation);
+    const order = cache.get(req.query.orderId);
+    if (!order) {
+        throw new Error('Order is not found');
+    }
 
     // 決済確認処理に必要なオプションを用意する。
-    const confirmation = {
-        transactionId: req.query.transactionId,
-        amount: reservation.amount,
-        currency: reservation.currency
+    const option = {
+        amount: order.amount,
+        currency: order.currency
     }
     console.log('以下のオプションで決済確認を行います。');
-    console.log(confirmation);
+    console.log(option);
 
     try {
         // LINE Pay APIを使って、決済確認を行う。
-        await pay.confirm(confirmation)
+        await pay.confirm(option, req.query.transactionId)
         res.send('決済が完了しました。');
 
         console.log('決済が完了しました。');
