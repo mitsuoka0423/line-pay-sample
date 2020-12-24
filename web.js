@@ -10,11 +10,12 @@ require('dotenv').config();
 
 // パッケージを使用します
 const { v4: uuidv4 } = require('uuid');
-const cache = require('memory-cache');
 const LinePay = require('line-pay-v3');
 const express = require("express");
 const app = express();
 
+// 注文のデータを一時的に保管します
+const orderData = {};
 
 // ローカル（自分のPC）でサーバーを公開するときのポート番号です
 app.listen(process.env.PORT || 5000, () => {
@@ -68,7 +69,7 @@ app.use('/pay/request', async (req, res) => {
         console.log('response', response);
 
         // 決済確認処理に必要な情報を保存しておく。
-        cache.put(order.orderId, order);
+        orderData[order.orderId] = order;
 
         // 決済画面に遷移する。
         res.redirect(response.info.paymentUrl.web);
@@ -90,7 +91,7 @@ app.use('/pay/confirm', async (req, res) => {
     if (!orderId) {
         throw new Error('Order ID is not found');
     }
-    const order = cache.get(req.query.orderId);
+    const order = orderData[req.query.orderId];
     if (!order) {
         throw new Error('Order is not found');
     }
