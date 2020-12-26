@@ -52,7 +52,7 @@ app.use('/pay/request', async (req, res) => {
             }
         ],
         redirectUrls: {
-            confirmUrl: 'http://localhost:5000/pay/confirm',
+            confirmUrl: 'http://localhost:3000/pay/confirm',
         }
     };
     console.log('以下のオプションで決済予約を行います。');
